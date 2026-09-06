@@ -43,6 +43,17 @@ def create_trader(llm):
             grounding = ""
             report_section = ""
 
+        account_context = (state.get("account_context") or "").strip()
+        if account_context:
+            account_section = f"{account_context}\n\n"
+            grounding += (
+                "Size the position and any add/trim/exit decision against the "
+                "account snapshot above -- actual buying power and any existing "
+                "position in this instrument -- rather than an assumed portfolio. "
+            )
+        else:
+            account_section = ""
+
         messages = [
             {
                 "role": "system",
@@ -59,6 +70,7 @@ def create_trader(llm):
                 "content": (
                     f"Here is the research team's investment plan for {company_name}. "
                     f"{instrument_context}\n\n"
+                    f"{account_section}"
                     f"{report_section}"
                     f"Proposed Investment Plan:\n{investment_plan}\n\n"
                     f"Make an informed, strategic trading decision."

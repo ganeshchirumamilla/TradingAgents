@@ -41,6 +41,8 @@ from cli.utils import (
     select_research_depth,
     select_shallow_thinking_agent,
 )
+from tradingagents.brokers.context import build_ibkr_account_context
+from tradingagents.brokers.execution import execute_decision
 from tradingagents.default_config import DEFAULT_CONFIG
 from tradingagents.graph.analyst_execution import (
     AnalystWallTimeTracker,
@@ -971,11 +973,17 @@ def format_tool_args(args, max_length=80) -> str:
         return result[:max_length - 3] + "..."
     return result
 
-def _build_run_config(selections: dict, checkpoint: bool | None) -> dict:
+def _build_run_config(
+    selections: dict,
+    checkpoint: bool | None,
+    ibkr: bool | None = None,
+    ibkr_execute: bool | None = None,
+) -> dict:
     """Assemble the run config from interactive selections, honoring env precedence.
 
-    Round counts and checkpoint follow "explicit env/flag wins": an env-applied
-    value on DEFAULT_CONFIG is preserved unless the user overrode it on the CLI.
+    Round counts, checkpoint, and the IBKR flags follow "explicit env/flag
+    wins": an env-applied value on DEFAULT_CONFIG is preserved unless the user
+    overrode it on the CLI.
     """
     config = DEFAULT_CONFIG.copy()
     # Research depth sets both round counts, but an explicit env override
@@ -998,14 +1006,22 @@ def _build_run_config(selections: dict, checkpoint: bool | None) -> dict:
     # the flag preserves TRADINGAGENTS_CHECKPOINT_ENABLED / the default (#976).
     if checkpoint is not None:
         config["checkpoint_enabled"] = checkpoint
+    if ibkr is not None:
+        config["ibkr_enabled"] = ibkr
+    if ibkr_execute is not None:
+        config["ibkr_auto_execute"] = ibkr_execute
     return config
 
 
-def run_analysis(checkpoint: bool | None = None):
+def run_analysis(
+    checkpoint: bool | None = None,
+    ibkr: bool | None = None,
+    ibkr_execute: bool | None = None,
+):
     # First get all user selections
     selections = get_user_selections()
 
-    config = _build_run_config(selections, checkpoint)
+    config = _build_run_config(selections, checkpoint, ibkr, ibkr_execute)
 
     # Create stats callback handler for tracking LLM/tool calls
     stats_handler = StatsCallbackHandler()
@@ -1117,11 +1133,13 @@ def run_analysis(checkpoint: bool | None = None):
         instrument_context = graph.resolve_instrument_context(
             selections["ticker"], selections["asset_type"]
         )
+        account_context = build_ibkr_account_context(selections["ticker"], config)
         init_agent_state = graph.propagator.create_initial_state(
             selections["ticker"],
             selections["analysis_date"],
             asset_type=selections["asset_type"],
             instrument_context=instrument_context,
+            account_context=account_context,
         )
         # Pass callbacks to graph config for tool execution tracking
         # (LLM tracking is handled separately via LLM constructor)
@@ -1278,6 +1296,30 @@ def run_analysis(checkpoint: bool | None = None):
     console.print("\n[bold cyan]Analysis Complete![/bold cyan]\n")
     console.print(f"[dim]{analyst_wall_time_tracker.format_summary()}[/dim]")
 
+    if config.get("ibkr_enabled"):
+        console.print(
+            Panel(
+                account_context or "[dim]No IBKR account data available.[/dim]",
+                title="IBKR Account",
+                border_style="cyan",
+            )
+        )
+        signal = graph.process_signal(final_state["final_trade_decision"])
+        execution_result = execute_decision(
+            selections["ticker"], signal, final_state["final_trade_decision"], config
+        )
+        final_state["execution_result"] = execution_result
+        if execution_result.submitted:
+            mode = "paper" if execution_result.paper else "[bold red]LIVE[/bold red]"
+            console.print(
+                f"[green]IBKR order submitted[/green] ({mode}): "
+                f"{execution_result.action} {execution_result.quantity} "
+                f"{selections['ticker']} ({execution_result.order_type}) — "
+                f"order id {execution_result.order_id}, status {execution_result.status}"
+            )
+        elif execution_result.attempted:
+            console.print(f"[yellow]IBKR order not placed:[/yellow] {execution_result.reason}")
+
     # Prompt to save report
     save_choice = typer.prompt("Save report?", default="Y").strip().upper()
     if save_choice in ("Y", "YES", ""):
@@ -1314,13 +1356,28 @@ def analyze(
         "--clear-checkpoints",
         help="Delete all saved checkpoints before running (force fresh start).",
     ),
+    ibkr: bool | None = typer.Option(
+        None,
+        "--ibkr/--no-ibkr",
+        help="Enable/disable IBKR account context and market data for this run "
+        "(requires TWS/IB Gateway running with the API enabled). Omit to honor "
+        "TRADINGAGENTS_IBKR_ENABLED.",
+    ),
+    ibkr_execute: bool | None = typer.Option(
+        None,
+        "--ibkr-execute/--no-ibkr-execute",
+        help="Enable/disable placing an order on IBKR after the Portfolio "
+        "Manager's decision (paper by default; live requires "
+        "TRADINGAGENTS_IBKR_CONFIRM_LIVE too). Requires --ibkr. Omit to honor "
+        "TRADINGAGENTS_IBKR_AUTO_EXECUTE.",
+    ),
 ):
     if clear_checkpoints:
         from tradingagents.graph.checkpointer import clear_all_checkpoints
         n = clear_all_checkpoints(DEFAULT_CONFIG["data_cache_dir"])
         console.print(f"[yellow]Cleared {n} checkpoint(s).[/yellow]")
     try:
-        run_analysis(checkpoint=checkpoint)
+        run_analysis(checkpoint=checkpoint, ibkr=ibkr, ibkr_execute=ibkr_execute)
     except _NO_CONSOLE_ERRORS:
         # A terminal with no console buffer cannot host the interactive prompts.
         # Emit one actionable line on stderr instead of a prompt_toolkit

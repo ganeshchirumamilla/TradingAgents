@@ -120,6 +120,40 @@ def test_invalid_bool_raises(monkeypatch, bad):
     importlib.reload(default_config_module)
 
 
+def test_ibkr_env_overrides(monkeypatch):
+    dc = _reload_with_env(
+        monkeypatch,
+        TRADINGAGENTS_IBKR_ENABLED="true",
+        TRADINGAGENTS_IBKR_HOST="10.0.0.9",
+        TRADINGAGENTS_IBKR_PORT="4002",
+        TRADINGAGENTS_IBKR_CLIENT_ID="3",
+        TRADINGAGENTS_IBKR_ACCOUNT="DU999999",
+        TRADINGAGENTS_IBKR_PAPER="false",
+        TRADINGAGENTS_IBKR_AUTO_EXECUTE="true",
+        TRADINGAGENTS_IBKR_ORDER_QUANTITY="5",
+        TRADINGAGENTS_IBKR_ORDER_TYPE="LMT",
+    )
+    assert dc.DEFAULT_CONFIG["ibkr_enabled"] is True
+    assert dc.DEFAULT_CONFIG["ibkr_host"] == "10.0.0.9"
+    assert dc.DEFAULT_CONFIG["ibkr_port"] == 4002
+    assert isinstance(dc.DEFAULT_CONFIG["ibkr_port"], int)
+    assert dc.DEFAULT_CONFIG["ibkr_client_id"] == 3
+    assert dc.DEFAULT_CONFIG["ibkr_account"] == "DU999999"
+    assert dc.DEFAULT_CONFIG["ibkr_paper"] is False
+    assert dc.DEFAULT_CONFIG["ibkr_auto_execute"] is True
+    assert dc.DEFAULT_CONFIG["ibkr_order_quantity"] == 5
+    assert dc.DEFAULT_CONFIG["ibkr_order_type"] == "LMT"
+
+
+def test_ibkr_defaults_are_safe(monkeypatch):
+    """No env set: IBKR stays fully off, paper-labeled, and out of the order path."""
+    dc = _reload_with_env(monkeypatch)
+    assert dc.DEFAULT_CONFIG["ibkr_enabled"] is False
+    assert dc.DEFAULT_CONFIG["ibkr_auto_execute"] is False
+    assert dc.DEFAULT_CONFIG["ibkr_paper"] is True
+    assert dc.DEFAULT_CONFIG["ibkr_account"] is None
+
+
 def test_unknown_env_var_is_ignored(monkeypatch):
     """Env vars outside _ENV_OVERRIDES must not bleed into DEFAULT_CONFIG."""
     dc = _reload_with_env(

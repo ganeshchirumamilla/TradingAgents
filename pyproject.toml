@@ -44,6 +44,12 @@ dev = [
 bedrock = [
     "langchain-aws>=1.5.0",
 ]
+# Interactive Brokers integration (account context, market data, order
+# execution via TWS/IB Gateway). Optional so the core install stays lean:
+# pip install "tradingagents[ibkr]".
+ibkr = [
+    "ib_async>=1.0.3",
+]
 
 [project.scripts]
 tradingagents = "cli.main:app"

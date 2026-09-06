@@ -26,6 +26,16 @@ _ENV_OVERRIDES = {
     "TRADINGAGENTS_GOOGLE_THINKING_LEVEL":   "google_thinking_level",
     "TRADINGAGENTS_OPENAI_REASONING_EFFORT": "openai_reasoning_effort",
     "TRADINGAGENTS_ANTHROPIC_EFFORT":        "anthropic_effort",
+    # Interactive Brokers (IBKR) integration
+    "TRADINGAGENTS_IBKR_ENABLED":         "ibkr_enabled",
+    "TRADINGAGENTS_IBKR_HOST":            "ibkr_host",
+    "TRADINGAGENTS_IBKR_PORT":            "ibkr_port",
+    "TRADINGAGENTS_IBKR_CLIENT_ID":       "ibkr_client_id",
+    "TRADINGAGENTS_IBKR_ACCOUNT":         "ibkr_account",
+    "TRADINGAGENTS_IBKR_PAPER":           "ibkr_paper",
+    "TRADINGAGENTS_IBKR_AUTO_EXECUTE":    "ibkr_auto_execute",
+    "TRADINGAGENTS_IBKR_ORDER_QUANTITY":  "ibkr_order_quantity",
+    "TRADINGAGENTS_IBKR_ORDER_TYPE":      "ibkr_order_type",
 }
 
 
@@ -137,7 +147,7 @@ DEFAULT_CONFIG = _apply_env_overrides({
     # routed to vendors you didn't choose. For ordered fallback, list several,
     # e.g. "yfinance,alpha_vantage". "default" uses all available vendors.
     "data_vendors": {
-        "core_stock_apis": "yfinance",       # Options: alpha_vantage, yfinance
+        "core_stock_apis": "yfinance",       # Options: alpha_vantage, yfinance, ibkr
         "technical_indicators": "yfinance",  # Options: alpha_vantage, yfinance
         "fundamental_data": "yfinance",      # Options: alpha_vantage, yfinance
         "news_data": "yfinance",             # Options: alpha_vantage, yfinance
@@ -148,6 +158,29 @@ DEFAULT_CONFIG = _apply_env_overrides({
     "tool_vendors": {
         # Example: "get_stock_data": "alpha_vantage",  # Override category default
     },
+    # Interactive Brokers (IBKR) integration. Disabled by default: the framework
+    # runs purely on public market data with no broker connection unless a user
+    # opts in. Requires TWS or IB Gateway running locally with the API enabled
+    # (see README). Install the optional dependency with: pip install ".[ibkr]"
+    "ibkr_enabled": False,
+    "ibkr_host": "127.0.0.1",
+    # Default TWS paper-trading port. Common alternatives: 7496 (TWS live),
+    # 4002 (IB Gateway paper), 4001 (IB Gateway live).
+    "ibkr_port": 7497,
+    "ibkr_client_id": 1,
+    "ibkr_account": None,   # None = use the first account IBKR reports as managed
+    # Safety default: assume paper trading unless explicitly told otherwise.
+    # This only labels the connection for display/logging — it does NOT itself
+    # prevent live orders. See ibkr_auto_execute and TRADINGAGENTS_IBKR_CONFIRM_LIVE.
+    "ibkr_paper": True,
+    "ibkr_timeout": 10.0,
+    # Order placement is a second, separate opt-in from ibkr_enabled (which only
+    # gates account/data lookups). Both must be True to place any order, and a
+    # live (non-paper) order additionally requires the TRADINGAGENTS_IBKR_CONFIRM_LIVE
+    # env var to be set — see tradingagents/brokers/execution.py.
+    "ibkr_auto_execute": False,
+    "ibkr_order_quantity": 1,   # Shares per order; the framework does not size to a target weight
+    "ibkr_order_type": "MKT",   # MKT or LMT (LMT uses the Portfolio Manager's price target, when present)
     # Benchmark for alpha calculation in the reflection layer.
     # ``benchmark_ticker`` (when set) overrides the suffix map for all
     # tickers; leave it None to use ``benchmark_map`` for auto-detection
@@ -167,4 +200,21 @@ DEFAULT_CONFIG = _apply_env_overrides({
         ".SZ":  "399001.SZ",   # Shenzhen (SZSE Component)
         "":     "SPY",         # default for US-listed tickers (no suffix)
     },
+    # Local data caching and backtesting configuration
+    "use_local_data_cache": False,
+    "local_data_cache_dir": os.getenv("TRADINGAGENTS_LOCAL_DATA_CACHE_DIR",
+                                       os.path.join(_TRADINGAGENTS_HOME, "data_cache")),
+    "cache_ttl_days": 7,
+    "data_download_retries": 3,
+    "ibkr_data_download_enabled": False,
+    # Backtesting mode: when enabled, runs analysis on historical dates
+    # without placing real orders and using cached data where available
+    "backtest_mode": False,
+    "backtest_start_date": None,     # YYYY-MM-DD
+    "backtest_end_date": None,       # YYYY-MM-DD
+    "backtest_initial_capital": 100000,
+    "backtest_commission_rate": 0.001,    # 0.1% per trade
+    "backtest_slippage_bps": 10,          # 10 basis points
+    "backtest_max_position_size": 0.1,    # 10% max per position
+    "backtest_use_local_cache": True,
 })

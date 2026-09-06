@@ -40,6 +40,9 @@ def create_portfolio_manager(llm):
             else ""
         )
 
+        account_context = (state.get("account_context") or "").strip()
+        account_line = f"{account_context}\n\n" if account_context else ""
+
         prompt = f"""As the Portfolio Manager, synthesize the risk analysts' debate and deliver the final trading decision.
 
 {instrument_context}
@@ -53,7 +56,7 @@ def create_portfolio_manager(llm):
 - **Underweight**: Reduce exposure, take partial profits
 - **Sell**: Exit position or avoid entry
 
-**Context:**
+{account_line}**Context:**
 - Research Manager's investment plan: **{research_plan}**
 - Trader's transaction proposal: **{trader_plan}**
 {lessons_line}
@@ -63,6 +66,7 @@ def create_portfolio_manager(llm):
 ---
 
 Ground every conclusion in specific evidence from the analysts. Commit to a directional call only when the evidence clearly supports one; choose Hold when the case is balanced, materially conflicting, ambiguous, or insufficient to justify changing exposure, rather than forcing a direction to appear decisive. Weigh the analysts on their merits, independent of speaking order.
+{" Ground the executive summary's position sizing in the IBKR account snapshot above -- actual buying power and any existing position -- rather than an assumed portfolio." if account_context else ""}
 
 {NO_EXTERNAL_TOOLS}{get_language_instruction()}"""
 

@@ -29,6 +29,8 @@ from tradingagents.agents.utils.agent_utils import (
     resolve_instrument_identity,
 )
 from tradingagents.agents.utils.memory import TradingMemoryLog
+from tradingagents.brokers.context import build_ibkr_account_context
+from tradingagents.brokers.execution import execute_decision
 from tradingagents.dataflows.config import set_config
 from tradingagents.dataflows.utils import safe_ticker_component
 from tradingagents.default_config import DEFAULT_CONFIG
@@ -517,12 +519,14 @@ class TradingAgentsGraph:
             company_name, as_of=self._memory_as_of(trade_date)
         )
         instrument_context = self.resolve_instrument_context(company_name, asset_type)
+        account_context = build_ibkr_account_context(company_name, self.config)
         init_agent_state = self.propagator.create_initial_state(
             company_name,
             trade_date,
             asset_type=asset_type,
             past_context=past_context,
             instrument_context=instrument_context,
+            account_context=account_context,
         )
         args = self.propagator.get_graph_args()
 
@@ -571,7 +575,15 @@ class TradingAgentsGraph:
         # Clear checkpoint on successful completion to avoid stale state.
         self.clear_checkpoint_on_success(company_name, trade_date, asset_type)
 
-        return final_state, self.process_signal(final_state["final_trade_decision"])
+        signal = self.process_signal(final_state["final_trade_decision"])
+        # Order placement is a separate opt-in (ibkr_auto_execute) from the
+        # account-context lookup above; execute_decision() itself no-ops with a
+        # reason when it, or the live-trading confirmation gate, isn't armed.
+        final_state["execution_result"] = execute_decision(
+            company_name, signal, final_state["final_trade_decision"], self.config
+        )
+
+        return final_state, signal
 
     def _log_state(self, trade_date, final_state):
         """Log the final state to a JSON file."""
