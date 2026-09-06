@@ -1,0 +1,24 @@
+
+======================================================================
+[PARALLEL DOWNLOAD] IBKR Market Data
+======================================================================
+Tickers: 15 (AAPL, MSFT, NVDA...)
+Intervals: 1 min,5 mins,1 hour,1 day
+Days back: 90
+Parallel workers: 3
+Download order: ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'META']...
+======================================================================
+
+[PRE-FLIGHT CHECKS]:
+  - IBKR TWS/Gateway running? [OK]
+  - PostgreSQL running? [OK]
+  - Redis running (optional)? [OK]
+
+Continue? (yes/no): Traceback (most recent call last):
+  File "C:\Trading\TradingAgents\scripts\download_parallel.py", line 195, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Trading\TradingAgents\scripts\download_parallel.py", line 140, in main
+    response = input("\nContinue? (yes/no): ").strip().lower()
+               ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+EOFError: EOF when reading a line

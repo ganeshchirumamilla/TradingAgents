@@ -1,0 +1,7 @@
+# Data Pipeline Scheduler Requirements
+psycopg2-binary==2.9.9
+redis==5.0.0
+pandas==2.1.3
+ib-insync==10.19.0
+python-dateutil==2.8.2
+pytz==2023.3
