@@ -1,0 +1,50 @@
+﻿
+======================================================================
+POSTGRESQL EXPORT AND LOCAL MIGRATION SETUP
+======================================================================
+[CONNECT] Connecting to PostgreSQL (postgres database)...
+[OK] Connected
+
+[SCAN] Scanning for tables...
+
+Tables found:
+----------------------------------------------------------------------
+  public.historical_data                   -      1,460 rows
+  public.historical_data_1min              -     11,700 rows
+  public.historical_data_5min              -     18,918 rows
+  public.historical_data_daily             -        428 rows
+  public.historical_data_hourly            -      2,987 rows
+----------------------------------------------------------------------
+TOTAL                                    -     35,493 rows
+
+[EXPORT] Exporting to postgres_backup_20260906_144422.sql...
+----------------------------------------------------------------------
+  Exporting public.historical_data... [OK] 1460 rows
+  Exporting public.historical_data_1min... [OK] 11700 rows
+  Exporting public.historical_data_5min... [OK] 18918 rows
+  Exporting public.historical_data_daily... [OK] 428 rows
+  Exporting public.historical_data_hourly... [OK] 2987 rows
+
+[OK] Export complete
+     File: postgres_backup_20260906_144422.sql
+     Size: 9.84 MB
+     Rows: 35493
+
+[CREATE] Creating import guide...
+python : Traceback (most recent call last):
+At line:1 char:333
++ ... ing\TradingAgents"; python scripts/export_and_migrate.py 2>&1 | Tee-O ...
++                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Trading\TradingAgents\scripts\export_and_migrate.py", line 523, in <module>
+    main()
+    ~~~~^^
+  File "C:\Trading\TradingAgents\scripts\export_and_migrate.py", line 490, in main
+    create_import_guide(export_file, total_rows)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Trading\TradingAgents\scripts\export_and_migrate.py", line 376, in create_import_guide
+    | "psql: command not found" | Add PostgreSQL bin to PATH: `C:\\Program Files\\PostgreSQL\\{version}\\bin` |
+                                                                                               ^^^^^^^
+NameError: name 'version' is not defined

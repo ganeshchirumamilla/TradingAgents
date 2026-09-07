@@ -1,0 +1,73 @@
+[START] NVDA   - Starting download...
+[TIMEOUT] NVDA   - Download timed out
+[START] META   - Starting download...
+[TIMEOUT] META   - Download timed out
+[START] AVGO   - Starting download...
+[TIMEOUT] AVGO   - Download timed out
+[START] QQQ    - Starting download...
+[TIMEOUT] QQQ    - Download timed out
+[START] MSFT   - Starting download...
+[TIMEOUT] MSFT   - Download timed out
+[START] GOOGL  - Starting download...
+[TIMEOUT] GOOGL  - Download timed out
+[START] JPM    - Starting download...
+[TIMEOUT] JPM    - Download timed out
+[START] SPY    - Starting download...
+[OK]    SPY    - Download complete (5.2s)
+[START] IWM    - Starting download...
+[TIMEOUT] IWM    - Download timed out
+[START] AAPL   - Starting download...
+[OK]    AAPL   - Download complete (5.3s)
+[START] AMZN   - Starting download...
+[TIMEOUT] AMZN   - Download timed out
+[START] TSLA   - Starting download...
+[OK]    TSLA   - Download complete (4.9s)
+[START] AMD    - Starting download...
+[TIMEOUT] AMD    - Download timed out
+[START] GS     - Starting download...
+[TIMEOUT] GS     - Download timed out
+[START] DIA    - Starting download...
+[TIMEOUT] DIA    - Download timed out
+
+======================================================================
+[PARALLEL DOWNLOAD] IBKR Market Data
+======================================================================
+Tickers: 15 (AAPL, MSFT, NVDA...)
+Intervals: 1 min,5 mins,1 hour,1 day
+Days back: 90
+Parallel workers: 3
+Download order: ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'META']...
+======================================================================
+
+[PRE-FLIGHT CHECKS]:
+  - IBKR TWS/Gateway running? [OK]
+  - PostgreSQL running? [OK]
+  - Redis running (optional)? [OK]
+
+[START] Downloading 15 tickers with 3 parallel workers...
+======================================================================
+
+
+======================================================================
+[SUMMARY] Parallel Download Complete
+======================================================================
+Total tickers: 15
+Successful: 3
+Failed: 12
+Total time: 120.3 minutes
+Average time per ticker: 481.0s
+
+Failed tickers:
+  - NVDA (600.0s)
+  - MSFT (600.0s)
+  - AMZN (600.0s)
+  - META (600.0s)
+  - GOOGL (600.0s)
+  - AMD (600.0s)
+  - JPM (600.0s)
+  - AVGO (600.0s)
+  - GS (600.0s)
+  - QQQ (600.0s)
+  - IWM (600.0s)
+  - DIA (600.0s)
+======================================================================

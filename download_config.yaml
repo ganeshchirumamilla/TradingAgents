@@ -1,0 +1,194 @@
+# Market Data Download Configuration
+# Defines tickers, historical ranges, storage locations, and persistence settings
+
+download:
+  # Output format: parquet (requires pyarrow) or csv
+  format: "csv"
+
+  # Save downloaded data to files before persisting to DB
+  save_files: true
+
+  # File storage location with placeholders:
+  # {ticker} = AAPL, MSFT, etc
+  # {timeframe} = 1min, 5min, hourly, daily
+  # {start_date} = 20260101, 20240101, etc
+  file_path_template: "~/.tradingagents/data_downloads/{ticker}/{timeframe}/data_{start_date}.{format}"
+
+  # Compression for parquet files: snappy, gzip, brotli, none
+  compression: "snappy"
+
+# Tickers to download
+tickers:
+  AAPL:
+    name: "Apple Inc."
+    enabled: true
+  MSFT:
+    name: "Microsoft"
+    enabled: false
+  NVDA:
+    name: "NVIDIA"
+    enabled: false
+  AMZN:
+    name: "Amazon"
+    enabled: false
+  META:
+    name: "Meta Platforms"
+    enabled: false
+  GOOGL:
+    name: "Alphabet"
+    enabled: false
+  TSLA:
+    name: "Tesla"
+    enabled: false
+  AMD:
+    name: "AMD"
+    enabled: false
+  AVGO:
+    name: "Broadcom"
+    enabled: false
+  JPM:
+    name: "JPMorgan"
+    enabled: false
+  GS:
+    name: "Goldman Sachs"
+    enabled: false
+  SPY:
+    name: "S&P 500 ETF"
+    enabled: false
+  QQQ:
+    name: "Nasdaq ETF"
+    enabled: false
+  IWM:
+    name: "Russell 2000 ETF"
+    enabled: false
+  DIA:
+    name: "Dow Jones ETF"
+    enabled: false
+  NFLX:
+    name: "Netflix"
+    enabled: false
+  ANET:
+    name: "Arista Networks"
+    enabled: false
+  MU:
+    name: "Micron Technology"
+    enabled: false
+  LLY:
+    name: "Eli Lilly"
+    enabled: false
+  PLTR:
+    name: "Palantir Technologies"
+    enabled: false
+  ARKK:
+    name: "ARK Innovation ETF"
+    enabled: false
+  TQQQ:
+    name: "Invesco QQQ Trust 3x"
+    enabled: false
+  SOXX:
+    name: "Semiconductor ETF"
+    enabled: false
+
+# Timeframe configurations with historical start dates
+timeframes:
+  1min:
+    bar_size: "1 min"
+    table_name: "historical_data_1min"
+    # Only download last 30 days (IBKR limits 1-min data - timeout on 90 days)
+    historical_start_date: null  # null = use default_days
+    default_days: 90
+    duration_format: "{days} D"
+    description: "1-minute bars"
+    keep_up_to_date: false
+
+  5min:
+    bar_size: "5 mins"
+    table_name: "historical_data_5min"
+    # Download last 180 days (reduce from 365 to avoid timeout)
+    historical_start_date: null
+    default_days: 180
+    duration_format: "{days} D"
+    description: "5-minute bars"
+    keep_up_to_date: false
+
+  hourly:
+    bar_size: "1 hour"
+    table_name: "historical_data_hourly"
+    # Download last 1 year (IBKR limit: 365 days for hourly)
+    historical_start_date: null
+    default_days: 365
+    duration_format: "{days} D"
+    description: "Hourly bars"
+    keep_up_to_date: false
+
+  daily:
+    bar_size: "1 day"
+    table_name: "historical_data_daily"
+    # Download last 365 days (IBKR timeout on 500+ days for daily)
+    historical_start_date: null
+    default_days: 3650
+    duration_format: "{days} D"
+    description: "Daily bars"
+    keep_up_to_date: false
+
+# Database persistence settings
+database:
+  host: "localhost"
+  port: 5432
+  name: "postgres"
+  user: "postgres"
+  password: "admin"
+
+  # On conflict strategy: DO_NOTHING, DO_UPDATE
+  conflict_strategy: "DO_NOTHING"
+
+  # Batch insert size for performance
+  batch_size: 1000
+
+# Redis cache settings (optional)
+redis:
+  enabled: true  # Set to true if Redis is available
+  host: "localhost"
+  port: 6379
+  db: 0
+  ttl_seconds: 604800  # 7 days
+
+# IBKR Connection settings
+ibkr:
+  host: "127.0.0.1"
+  port: 4002
+  client_id: 1
+  connection_timeout: 30
+  request_timeout: 60
+  what_to_show: "TRADES"  # Real volume data
+  use_rth: true  # Regular Trading Hours only
+
+# Download savepoint settings
+savepoint:
+  # Location to save download status for resumption
+  file_path: "~/.tradingagents/download_status.json"
+
+  # Auto-save interval (every N tickers downloaded)
+  save_interval: 1
+
+  # Preserve history of past downloads
+  keep_history: true
+  history_path: "~/.tradingagents/download_history/"
+
+# Logging and monitoring
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file_path: "~/.tradingagents/download.log"
+  console_output: true
+
+# Retry settings
+retry:
+  max_attempts: 3
+  backoff_factor: 2  # Exponential backoff
+  timeout_seconds: 60
+
+# Performance settings
+performance:
+  parallel_workers: 3  # Number of concurrent ticker downloads
+  max_parallel_tickers: 5
+  rate_limit_ms: 1000  # Delay between IBKR requests

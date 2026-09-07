@@ -1,0 +1,10 @@
+﻿python : Traceback (most recent call last):
+At line:1 char:333
++ ... ingAgents"; python scripts/download_historical_data.py AAPL 2>&1 | Te ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Trading\TradingAgents\scripts\download_historical_data.py", line 18, in <module>
+    import pyarrow.parquet as pq
+ModuleNotFoundError: No module named 'pyarrow'
